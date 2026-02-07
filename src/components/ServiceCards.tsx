@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
-import type { ServiceItem } from "@/lib/config";
+import { fetchServices, type ServiceItem } from "@/lib/config";
 
 /* ──────────────────────── Lightbox Modal ────────────────────── */
 
@@ -13,13 +13,11 @@ function Lightbox({
   item: ServiceItem;
   onClose: () => void;
 }) {
-  // Close on Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handler);
-    // Prevent body scroll while open
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", handler);
@@ -32,15 +30,12 @@ function Lightbox({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-fade-in"
       onClick={onClose}
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
 
-      {/* Content */}
       <div
         className="relative z-10 max-w-4xl w-full animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute -top-12 right-0 md:right-0 text-white/70 hover:text-white transition-colors cursor-pointer"
@@ -51,7 +46,6 @@ function Lightbox({
           </svg>
         </button>
 
-        {/* Image */}
         <div className="relative w-full aspect-[3/4] md:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
           <Image
             src={item.ImageUrl}
@@ -61,7 +55,6 @@ function Lightbox({
             sizes="(max-width: 768px) 100vw, 80vw"
             priority
           />
-          {/* Gradient overlay at bottom for caption */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-24 pb-8 px-8">
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -106,7 +99,6 @@ function ServiceCard({
       className="group bg-white rounded-2xl overflow-hidden shadow-lg shadow-black/5 hover:shadow-2xl hover:shadow-gold-500/10 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      {/* Image */}
       <div className="relative h-72 overflow-hidden">
         <Image
           src={item.ImageUrl}
@@ -125,7 +117,6 @@ function ServiceCard({
             {item.Price}
           </span>
         </div>
-        {/* Expand hint */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +126,6 @@ function ServiceCard({
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6">
         <h3 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-charcoal mb-2">
           {item.Title}
@@ -161,14 +151,28 @@ function ServiceCard({
 
 /* ──────────────────── Exported Grid Component ──────────────── */
 
+/**
+ * Renders with `initialData` immediately (from server/build),
+ * then refetches fresh data client-side on mount.
+ */
 export default function ServiceCardsGrid({
-  services,
+  initialData,
 }: {
-  services: ServiceItem[];
+  initialData: ServiceItem[];
 }) {
+  const [services, setServices] = useState<ServiceItem[]>(initialData);
   const [selected, setSelected] = useState<ServiceItem | null>(null);
 
+  // Client-side refresh on mount
+  useEffect(() => {
+    fetchServices().then((fresh) => {
+      if (fresh.length > 0) setServices(fresh);
+    });
+  }, []);
+
   const handleClose = useCallback(() => setSelected(null), []);
+
+  if (services.length === 0) return null;
 
   return (
     <>

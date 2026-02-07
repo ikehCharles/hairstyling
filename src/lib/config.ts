@@ -1,4 +1,5 @@
 // Environment configuration with fallbacks
+// All NEXT_PUBLIC_ values are inlined at build time AND available client-side
 
 export const config = {
   // API URLs
@@ -37,14 +38,12 @@ export interface GalleryItem {
   VideoUrl?: string;
 }
 
-// ─── Fetch helpers ───
+// ─── Fetch helpers (work both server-side at build & client-side in browser) ───
 
 export async function fetchServices(): Promise<ServiceItem[]> {
   if (!config.sheetsApiUrl) return [];
   try {
-    const res = await fetch(config.sheetsApiUrl, {
-      next: { revalidate: 60 }, // revalidate every 60 seconds
-    });
+    const res = await fetch(config.sheetsApiUrl, { cache: "no-store" });
     if (!res.ok) return [];
     const data: ServiceItem[] = await res.json();
     return data.filter((item) => item.Active !== false);
@@ -57,9 +56,7 @@ export async function fetchServices(): Promise<ServiceItem[]> {
 export async function fetchGallery(): Promise<GalleryItem[]> {
   if (!config.sheetsApiGalleryUrl) return [];
   try {
-    const res = await fetch(config.sheetsApiGalleryUrl, {
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(config.sheetsApiGalleryUrl, { cache: "no-store" });
     if (!res.ok) return [];
     const data: GalleryItem[] = await res.json();
     return data;
@@ -71,7 +68,6 @@ export async function fetchGallery(): Promise<GalleryItem[]> {
 
 /**
  * Extract the YouTube embed src URL from an iframe HTML string.
- * Returns the src or null if not found.
  */
 export function extractYouTubeSrc(iframeHtml: string): string | null {
   const match = iframeHtml.match(/src="([^"]+)"/);

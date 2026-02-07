@@ -89,32 +89,8 @@ function StatsSection() {
 /* ──────────────────────────── Services ──────────────────────── */
 
 async function ServicesSection() {
-  const services = await fetchServices();
-
-  if (services.length === 0) {
-    return (
-      <section id="services" className="py-24 bg-cream">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-gold-600 uppercase tracking-[0.3em] text-sm mb-4">
-            Our Services
-          </p>
-          <h2 className="text-4xl md:text-5xl font-[family-name:var(--font-heading)] font-bold text-charcoal mb-6">
-            Signature Hairstyles
-          </h2>
-          <p className="text-charcoal/60 text-lg">
-            Services are being updated. Please check back soon or call us at{" "}
-            <a
-              href={`tel:${config.phoneNumber.replace(/\s/g, "")}`}
-              className="text-gold-600 underline"
-            >
-              {config.phoneNumber}
-            </a>
-            .
-          </p>
-        </div>
-      </section>
-    );
-  }
+  // Server-side: fetch at build time → baked into static HTML
+  const initialServices = await fetchServices();
 
   return (
     <section id="services" className="py-24 bg-cream">
@@ -132,7 +108,8 @@ async function ServicesSection() {
           </p>
         </div>
 
-        <ServiceCardsGrid services={services} />
+        {/* Client component: renders initialData immediately, then refetches fresh */}
+        <ServiceCardsGrid initialData={initialServices} />
       </div>
     </section>
   );
